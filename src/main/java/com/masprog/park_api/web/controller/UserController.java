@@ -32,9 +32,7 @@ public class UserController {
 
     private final UserService userService;
 
-    @Operation(
-            summary = "Create a new user",
-            description = "Creates a new user with the provided information.",
+    @Operation(summary = "Create a new user", description = "Creates a new user with the provided information.",
             responses = {
                     @ApiResponse(responseCode = "201", description = "User created successfully.",
                             content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponseDto.class))
@@ -51,6 +49,15 @@ public class UserController {
        return ResponseEntity.status(HttpStatus.CREATED).body(UserMapper.toDto(user));
     }
 
+    @Operation(summary = "Find user by ID", description = "Retrieves a user by their unique identifier.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200", description = "User retrieved successfully.",
+                            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponseDto.class))),
+                    @ApiResponse(responseCode = "404", description = "User not found.",
+                            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorMessage.class)))
+            }
+    )
     @GetMapping("/{id}")
     public ResponseEntity<UserResponseDto> getById(@PathVariable Long id){
         User user = userService.findById(id);
