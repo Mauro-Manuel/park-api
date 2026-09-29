@@ -15,7 +15,7 @@ public class SpringDocOpenApiConfig {
         return new OpenAPI()
                 .info(
                         new Info()
-                                .title("REST API - Spring Park")
+                                .title("REST API - Park")
                                 .description("Api para gestão de estacionamento de veículos")
                                 .version("v1")
                                 .license(new License().name("Apache 2.0").url("https://www.apache.org/"))
