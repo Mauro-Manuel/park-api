@@ -1,6 +1,8 @@
 package com.masprog.park_api.service;
 
 import com.masprog.park_api.entity.User;
+import com.masprog.park_api.exception.EntityNotFoundException;
+import com.masprog.park_api.exception.PasswordInvalidException;
 import com.masprog.park_api.exception.UsernameUniqueViolationException;
 import com.masprog.park_api.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +32,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public User findById(Long id) {
         return userRepository.findById(id).orElseThrow(
-                () -> new RuntimeException("User not found")
+                () -> new EntityNotFoundException(String.format("User id=%s not found", id))
         );
     }
 
@@ -38,12 +40,12 @@ public class UserService {
     public User changePassword(Long id, String currentPassword, String newPassword, String confirmPassword) {
 
         if(!newPassword.equals(confirmPassword)){
-           throw new RuntimeException("New password does not match the password confirmation.");
+           throw new PasswordInvalidException("New password does not match the password confirmation.");
         }
 
         User user = findById(id);
         if (!user.getPassword().equals(currentPassword)){
-            throw new RuntimeException("Your password does not match.");
+            throw new PasswordInvalidException("Your password does not match.");
         }
         user.setPassword(newPassword);
         return user;
