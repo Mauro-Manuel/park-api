@@ -133,4 +133,51 @@ public class UserIT {
         assertThat(response.getMessage())
                 .isEqualTo("Username ana@email.com already exists");
     }
+
+
+    @Test
+    void findUserById_WithExistingId_ShouldReturnUserWithStatus200() {
+
+        // Arrange
+        Long userId = 100L;
+
+        // Act
+        UserResponseDto response = testClient
+                .get()
+                .uri("/api/v1/users/{id}", userId)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(UserResponseDto.class)
+                .returnResult()
+                .getResponseBody();
+
+        // Assert
+        assertThat(response).isNotNull();
+        assertThat(response.getId()).isEqualTo(userId);
+        assertThat(response.getUsername()).isEqualTo("ana@email.com");
+        assertThat(response.getRole()).isEqualTo("ADMIN");
+    }
+
+    @Test
+    void findUserById_WithNonExistingId_ShouldReturnStatus404() {
+
+        // Arrange
+        Long userId = 0L;
+
+         // Act
+        ErrorMessage response = testClient
+                .get()
+                .uri("/api/v1/users/{id}", userId)
+                .exchange()
+                .expectStatus().isNotFound()
+                .expectBody(ErrorMessage.class)
+                .returnResult()
+                .getResponseBody();
+
+        // Assert
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(404);
+        assertThat(response.getMessage())
+                .isEqualTo("User id=0 not found");
+    }
 }
