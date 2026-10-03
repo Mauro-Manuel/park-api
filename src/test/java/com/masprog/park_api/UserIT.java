@@ -1,6 +1,9 @@
 package com.masprog.park_api;
 
+import com.masprog.park_api.entity.User;
+import com.masprog.park_api.repository.UserRepository;
 import com.masprog.park_api.web.dto.UserCreateDto;
+import com.masprog.park_api.web.dto.UserPasswordDto;
 import com.masprog.park_api.web.dto.UserResponseDto;
 import com.masprog.park_api.web.exception.ErrorMessage;
 import org.junit.jupiter.api.Test;
@@ -22,6 +25,9 @@ public class UserIT {
 
     @Autowired
     RestTestClient testClient;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Test
     void createUser_WithValidUsernameAndPassword_ShouldReturnCreatedUserWithStatus201() {
@@ -180,4 +186,154 @@ public class UserIT {
         assertThat(response.getMessage())
                 .isEqualTo("User id=0 not found");
     }
+
+    @Test
+    void changePassword_WithValidData_ShouldReturnStatus204(){
+        // Arrange
+        Long userId = 100L;
+        UserPasswordDto request =
+                new UserPasswordDto("123456", "101010", "101010");
+
+        // Act
+        testClient
+                .patch()
+                .uri("/api/v1/users/{id}", userId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(request)
+                .exchange()
+                .expectStatus().isNoContent()
+                .expectBody().isEmpty();
+
+        // Assert
+        User user = userRepository.findById(userId).orElseThrow();
+
+        assertThat(user.getPassword()).isEqualTo("101010");
+    }
+
+    @Test
+    void changePassword_WithNonExistingUserId_ShouldReturnStatus404(){
+        // Arrange
+        Long userId = 0L;
+
+        UserPasswordDto request =
+                new UserPasswordDto("123456", "101010", "101010");
+
+        // Act
+        ErrorMessage response = testClient
+                .patch()
+                .uri("/api/v1/users/{id}", userId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(request)
+                .exchange()
+                .expectStatus().isNotFound()
+                .expectBody(ErrorMessage.class)
+                .returnResult()
+                .getResponseBody();
+
+        // Assert
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(404);
+        assertThat(response.getMessage())
+                .isEqualTo("User id=0 not found");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "",
+            "12345",
+            "1234567"
+    })
+    void changePassword_WithInvalidData_ShouldReturnStatus422(String password) {
+
+        // Arrange
+        Long userId = 100L;
+
+        UserPasswordDto request =
+                new UserPasswordDto(password, password, password);
+
+        // Act
+        ErrorMessage response = testClient
+                .patch()
+                .uri("/api/v1/users/{id}", userId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(request)
+                .exchange()
+                .expectStatus().isEqualTo(422)
+                .expectBody(ErrorMessage.class)
+                .returnResult()
+                .getResponseBody();
+
+        // Assert
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(422);
+    }
+
+    @Test
+    void changePassword_WithDifferentPasswordConfirmation_ShouldReturnStatus400() {
+
+        // Arrange
+        Long userId = 100L;
+
+        UserPasswordDto request =
+                new UserPasswordDto(
+                        "123456",
+                        "123456",
+                        "000000"
+                );
+
+        // Act
+        ErrorMessage response = testClient
+                .patch()
+                .uri("/api/v1/users/{id}", userId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(request)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody(ErrorMessage.class)
+                .returnResult()
+                .getResponseBody();
+
+        // Assert
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(response.getMessage())
+                .isEqualTo(
+                        "New password does not match the password confirmation."
+                );
+    }
+
+    @Test
+    void changePassword_WithIncorrectCurrentPassword_ShouldReturnStatus400() {
+
+        // Arrange
+        Long userId = 100L;
+
+        UserPasswordDto request =
+                new UserPasswordDto(
+                        "000000",
+                        "123456",
+                        "123456"
+                );
+
+        // Act
+        ErrorMessage response = testClient
+                .patch()
+                .uri("/api/v1/users/{id}", userId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(request)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody(ErrorMessage.class)
+                .returnResult()
+                .getResponseBody();
+
+        // Assert
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(response.getMessage())
+                .isEqualTo(
+                        "Your password does not match."
+                );
+    }
+
 }
