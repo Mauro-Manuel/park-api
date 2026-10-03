@@ -107,4 +107,30 @@ public class UserIT {
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(422);
     }
+
+    @Test
+    void createUser_WithExistingUsername_ShouldReturnStatus409() {
+
+        // Arrange
+        UserCreateDto request =
+                new UserCreateDto("ana@email.com", "123456");
+
+        // Act
+        ErrorMessage response = testClient
+                .post()
+                .uri("/api/v1/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(request)
+                .exchange()
+                .expectStatus().isEqualTo(409)
+                .expectBody(ErrorMessage.class)
+                .returnResult()
+                .getResponseBody();
+
+        // Assert
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(409);
+        assertThat(response.getMessage())
+                .isEqualTo("Username ana@email.com already exists");
+    }
 }
