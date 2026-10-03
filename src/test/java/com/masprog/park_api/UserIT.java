@@ -15,7 +15,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.client.RestTestClient;
+import org.springframework.core.ParameterizedTypeReference;
+
+import java.util.Collections;
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureRestTestClient
@@ -333,6 +339,35 @@ public class UserIT {
         assertThat(response.getMessage())
                 .isEqualTo(
                         "Your password does not match."
+                );
+    }
+
+    @Test
+    void getAllUsers_WithExistingUsers_ShouldReturnUsersWithStatus200() {
+
+        // Act
+        List<UserResponseDto> response = testClient
+                .get()
+                .uri("/api/v1/users")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(new ParameterizedTypeReference<List<UserResponseDto>>() {})
+                .returnResult()
+                .getResponseBody();
+
+        // Assert
+        assertThat(response).isNotNull();
+        assertThat(response).hasSize(3);
+        assertThat(response)
+                .extracting(
+                        UserResponseDto::getId,
+                        UserResponseDto::getUsername,
+                        UserResponseDto::getRole
+                )
+                .containsExactlyInAnyOrder(
+                        tuple(100L, "ana@email.com", "ADMIN"),
+                        tuple(101L, "bia@email.com", "CLIENT"),
+                        tuple(102L, "bob@email.com", "CLIENT")
                 );
     }
 
