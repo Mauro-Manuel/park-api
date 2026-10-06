@@ -43,7 +43,7 @@ public class AuthenticationController {
             log.warn("Bad Credentials from username '{}'", dto.getUsername());
         }
         return ResponseEntity
-                .badRequest()
+                .status(HttpStatus.UNAUTHORIZED)
                 .body(new ErrorMessage(request, HttpStatus.UNAUTHORIZED, "Invalid credentials."));
     }
 
